@@ -128,8 +128,10 @@ def import_bibtex(bibtex):
 	for publication in publications:
 		try:
 			publication.save()
+			print 'saved', publication
 			saved_publications.append(publication)
 		except Exception, e:
+			print e
 			# show error message
 			errors.append('An error occurred saving publication %s: %s' % (publication.citekey, e))
 
