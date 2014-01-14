@@ -17,7 +17,7 @@
 			"order": 1,
 			"type": "Conference",
 			"description": "Conference Papers",
-			"bibtex_types": "inproceedings, conference",
+			"bibtex_types": "proceedings, inproceedings, conference",
 			"hidden": 0
 		}
 	},
