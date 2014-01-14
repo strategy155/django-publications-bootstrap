@@ -92,6 +92,24 @@ def import_bibtex(request):
 					if type_id is None:
 						errors['bibliography'] = 'Type "' + entry['type'] + '" unknown.'
 						break
+					
+					# Handle case where 'Volume' key contains DOI reference
+					volume = entry.get('volume', None)
+					if volume:
+						try:
+							int(volume)
+						except ValueError:
+							if 'doi' in volume.lower():
+								entry['doi'] = entry['volume']
+							entry['volume'] = None
+
+					# Handle case where 'Number' key is not a number (eg. {-})
+					number = entry.get('number', None)
+					if number:
+						try:
+							int(number)
+						except ValueError:
+							entry['number'] = None
 
 					# add publication
 					publications.append(Publication(
@@ -130,20 +148,23 @@ def import_bibtex(request):
 					'request': request},
 				RequestContext(request))
 		else:
-			try:
-				# save publications
-				for publication in publications:
+			# save publications
+			saved = 0
+			for publication in publications:
+				try:
 					publication.save()
-			except:
-				msg = 'Some error occured during saving of publications.'
-			else:
+					saved += 1
+				except Exception, e:
+					# show error message
+					messages.error(request, 'An error occurred saving publications: %s' % e)
+			if saved > 0:
 				if len(publications) > 1:
 					msg = 'Successfully added ' + str(len(publications)) + ' publications.'
 				else:
 					msg = 'Successfully added ' + str(len(publications)) + ' publication.'
 
-			# show message
-			messages.info(request, msg)
+				# show message
+				messages.info(request, msg)
 
 			# redirect to publication listing
 			return HttpResponseRedirect('../')
