@@ -23,6 +23,9 @@ MONTHS = {
 	'nov': 11, 'november': 11,
 	'dec': 12, 'december': 12}
 
+def _replace_escaped_spaces(string):
+	return string.replace(r'\ ', ' ')
+
 def _ungroup_latex(string):
 	'''Strip curly braces from a string, except for backslash-escaped ones.'''
 	
@@ -44,13 +47,19 @@ def _try_latex_to_utf8(string):
 	except ValueError:
 		return string
 
+def _latex_to_text(string):
+	string = _try_latex_to_utf8(string)
+	string = _ungroup_latex(string)
+	string = _replace_escaped_spaces(string)
+	return string
+
 def _delatex(record):
 	for key in record:
 		val = record[key]
 		if isinstance(val, list):
-			val = [_ungroup_latex(_try_latex_to_utf8(part)) for part in val]
+			val = [_latex_to_text(part) for part in val]
 		else:
-			val = _ungroup_latex(_try_latex_to_utf8(val))
+			val = _latex_to_text(val)
 		record[key] = val
 	return record
 
