@@ -27,12 +27,12 @@ def _ungroup_latex(string):
 	'''Strip curly braces from a string, except for backslash-escaped ones.'''
 	
 	strip_unescaped_braces_regex = r'''
-	(?<!\\) # not a backslash
-	({)		# followed by an open curly brace
-	|		# or
-	(?<!\\)	# not a backslash
-	(})		# followed by a closed curly brace
-	'''
+		(?<!\\) # not a backslash
+		({)		# followed by an open curly brace
+		|		# or
+		(?<!\\)	# not a backslash
+		(})		# followed by a closed curly brace
+		'''
 	string = re.sub(strip_unescaped_braces_regex, '', string, flags=re.VERBOSE)
 	
 	# replace escaped curly braces with unescaped ones. 
