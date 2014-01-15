@@ -6,6 +6,7 @@ from publications.models import Publication, Type
 from cStringIO import StringIO
 from bibtexparser.bparser import BibTexParser
 from bibtexparser.customization import convert_to_unicode, author, keyword
+import latexcodec, re
 
 # mapping of months
 MONTHS = {
@@ -22,10 +23,42 @@ MONTHS = {
 	'nov': 11, 'november': 11,
 	'dec': 12, 'december': 12}
 
+def _ungroup_latex(string):
+	'''Strip curly braces from a string, except for backslash-escaped ones.'''
+	
+	strip_unescaped_braces_regex = r'''
+	(?<!\\) # not a backslash
+	({)		# followed by an open curly brace
+	|		# or
+	(?<!\\)	# not a backslash
+	(})		# followed by a closed curly brace
+	'''
+	string = re.sub(strip_unescaped_braces_regex, '', string, flags=re.VERBOSE)
+	
+	# replace escaped curly braces with unescaped ones. 
+	return string.replace(r'\{', '{').replace(r'\}', '}')
+
+def _try_latex_to_utf8(string):
+	try:
+		return string.encode('utf-8').decode('latex+utf-8')
+	except ValueError:
+		return string
+
+def _delatex(record):
+	for key in record:
+		val = record[key]
+		if isinstance(val, list):
+			val = [_ungroup_latex(_try_latex_to_utf8(part)) for part in val]
+		else:
+			val = _ungroup_latex(_try_latex_to_utf8(val))
+		record[key] = val
+	return record
+
 def _bibtexparser_customizations(record):
 	record = convert_to_unicode(record)
 	record = author(record)
 	record = keyword(record)
+	record = _delatex(record)
 	return record
 
 def import_bibtex(bibtex):
