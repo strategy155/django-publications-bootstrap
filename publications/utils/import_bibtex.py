@@ -1,10 +1,11 @@
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
-__author__ = 'Lucas Theis <lucas@theis.io>'
+__author__ = 'Lucas Theis <lucas@theis.io> and Christian Glodt <chris@mind.lu>'
 __docformat__ = 'epytext'
 
-from publications.bibtex import parse
 from publications.models import Publication, Type
-from string import split, join
+from cStringIO import StringIO
+from bibtexparser.bparser import BibTexParser
+from bibtexparser.customization import convert_to_unicode, author, keyword
 
 # mapping of months
 MONTHS = {
@@ -21,9 +22,25 @@ MONTHS = {
 	'nov': 11, 'november': 11,
 	'dec': 12, 'december': 12}
 
+def _bibtexparser_customizations(record):
+	record = convert_to_unicode(record)
+	record = author(record)
+	record = keyword(record)
+	return record
+
 def import_bibtex(bibtex):
+	'''
+	Import BibTeX data from a file-like object or a string
+	'''
+	
+	# BibTexParser expects a utf-8 byte-string
+	if isinstance(bibtex, unicode):
+		bibtex = StringIO(bibtex.encode('utf-8'))
+	elif isinstance(bibtex, str):
+		bibtex = StringIO(bibtex)
+		
 	# try to parse BibTex
-	bib = parse(bibtex) # always returns a list
+	bib = BibTexParser(bibtex, customization=_bibtexparser_customizations).get_entry_list()
 
 	# container for error messages
 	errors = []
@@ -33,18 +50,29 @@ def import_bibtex(bibtex):
 
 	publications = []
 
+	integer_keys = [
+		'volume',
+		'number',
+		'year']
+
 	# try adding publications
 	for entry in bib:
+		
+		# first fix integers - 'year' needs to be checked for int-ness in particular
+		for key in integer_keys:
+			try:
+				val = int(entry.get(key, ''))
+				entry[key] = str(val)
+			except ValueError:
+				entry[key] = None
+
 		if entry.has_key('title') and \
 		   entry.has_key('author') and \
-		   entry.has_key('year'):
-			# parse authors
-			authors = split(entry['author'], ' and ')
-			for i in range(len(authors)):
-				author = split(authors[i], ',')
-				author = [author[-1]] + author[:-1]
-				authors[i] = join(author, ' ')
-			authors = join(authors, ', ')
+		   entry.has_key('year') and \
+		   entry['year'] != None:
+			
+			# join parsed authors
+			authors = ', '.join(entry['author'])
 
 			# add missing keys
 			keys = [
@@ -64,10 +92,8 @@ def import_bibtex(bibtex):
 				if not entry.has_key(key):
 					entry[key] = ''
 
-			# map integer fields to integers
+			# map month
 			entry['month'] = MONTHS.get(entry['month'].lower(), 0)
-			entry['volume'] = entry.get('volume', None)
-			entry['number'] = entry.get('number', None)
 
 			# determine type
 			type_id = None
@@ -102,7 +128,7 @@ def import_bibtex(bibtex):
 			# add publication
 			publications.append(Publication(
 				type_id=type_id,
-				citekey=entry['key'],
+				citekey=entry['id'],
 				title=entry['title'],
 				authors=authors,
 				year=entry['year'],
@@ -118,9 +144,10 @@ def import_bibtex(bibtex):
 				doi=entry['doi'],
 				isbn=entry['isbn'],
 				abstract=entry['abstract'],
-				keywords=entry['keywords']))
+				keywords=', '.join(entry['keywords'])))
 		else:
-			errors.append('BibTeX entry %s is missing mandatory key title, author or year.' % entry['key'])
+			key = entry['id'] if 'id' in entry else '<unnamed>'
+			errors.append('BibTeX entry "%s" is missing mandatory key "title", "author" or "year".' % key)
 			continue
 
 	# save publications
@@ -128,11 +155,13 @@ def import_bibtex(bibtex):
 	for publication in publications:
 		try:
 			publication.save()
-			print 'saved', publication
 			saved_publications.append(publication)
 		except Exception, e:
-			print e
 			# show error message
-			errors.append('An error occurred saving publication %s: %s' % (publication.citekey, e))
+			key = publication.citekey
+			if not key:
+				key = '<unnamed>'
+			errors.append('An error occurred saving publication "%s": %s' % (key, e))
+			break
 
 	return saved_publications, errors
