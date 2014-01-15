@@ -50,7 +50,7 @@
 			"order": 4,
 			"type": "Book Chapter",
 			"description": "Book Chapters",
-			"bibtex_types": "inbook",
+			"bibtex_types": "inbook, incollection",
 			"hidden": 0
 		}
 	},
@@ -84,6 +84,17 @@
 			"type": "Unpublished",
 			"description": "Unpublished Papers",
 			"bibtex_types": "unpublished",
+			"hidden": 1
+		}
+	},
+	{
+	"model": "publications.type",
+	"pk": 9,
+		"fields": {
+			"order": 7,
+			"type": "Miscellaneous",
+			"description": "Miscellaneous Publications",
+			"bibtex_types": "misc",
 			"hidden": 1
 		}
 	},
