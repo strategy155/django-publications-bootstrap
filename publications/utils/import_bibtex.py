@@ -6,6 +6,7 @@ from publications.models import Publication, Type
 from cStringIO import StringIO
 from bibtexparser.bparser import BibTexParser
 from bibtexparser.customization import convert_to_unicode, author, keyword
+from django.forms.models import model_to_dict
 import latexcodec, re
 
 # mapping of months
@@ -104,7 +105,7 @@ def import_bibtex(bibtex):
 		for key in integer_keys:
 			try:
 				val = int(entry.get(key, ''))
-				entry[key] = str(val)
+				entry[key] = val
 			except ValueError:
 				entry[key] = None
 
@@ -114,8 +115,12 @@ def import_bibtex(bibtex):
 		   entry['year'] != None:
 			
 			# join parsed authors
-			authors = ', '.join(entry['author'])
-
+			def reverse_and_unseparate_name(n):
+				if ',' in n:
+					return ' '.join([p.strip() for p in n.split(',')][::-1])
+				return n			
+			authors = ', '.join([reverse_and_unseparate_name(n) for n in entry['author']])
+			
 			# add missing keys
 			keys = [
 				'journal',
@@ -132,7 +137,7 @@ def import_bibtex(bibtex):
 
 			for key in keys:
 				if not entry.has_key(key):
-					entry[key] = ''
+					entry[key] = u''
 
 			# map month
 			entry['month'] = MONTHS.get(entry['month'].lower(), 0)
@@ -167,26 +172,35 @@ def import_bibtex(bibtex):
 				except ValueError:
 					entry['number'] = None
 
-			# add publication
-			publications.append(Publication(
-				type_id=type_id,
-				citekey=entry['id'],
-				title=entry['title'],
-				authors=authors,
+
+			publication_data = dict(type_id=type_id,
+				title=unicode(entry['title']),
+				authors=unicode(authors),
 				year=entry['year'],
 				month=entry['month'],
-				journal=entry['journal'],
-				book_title=entry['booktitle'],
-				publisher=entry['publisher'],
-				institution=entry['institution'],
+				journal=unicode(entry['journal']),
+				book_title=unicode(entry['booktitle']),
+				publisher=unicode(entry['publisher']),
+				institution=unicode(entry['institution']),
 				volume=entry['volume'],
 				number=entry['number'],
-				note=entry['note'],
-				url=entry['url'],
-				doi=entry['doi'],
-				isbn=entry['isbn'],
-				abstract=entry['abstract'],
-				keywords=', '.join(entry['keywords'])))
+				note=unicode(entry['note']),
+				url=unicode(entry['url']),
+				doi=unicode(entry['doi']),
+				isbn=unicode(entry['isbn']),
+				abstract=unicode(entry['abstract']),
+				keywords=unicode(u', '.join(entry['keywords'])))
+			
+			publication = Publication(**publication_data)
+			try:
+				converted_data = model_to_dict(publication, exclude=['lists', 'image', 'pdf', 'banner', 'id', 'citekey'])
+				publication = Publication.objects.get(**converted_data)
+			except Publication.DoesNotExist:
+				publication.citekey = entry['id']
+				publication.save()
+			
+			# add publication
+			publications.append(publication)
 		else:
 			key = entry['id'] if 'id' in entry else '<unnamed>'
 			errors.append('BibTeX entry "%s" is missing mandatory key "title", "author" or "year".' % key)
