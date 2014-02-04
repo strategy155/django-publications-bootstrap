@@ -28,7 +28,7 @@
 			"order": 2,
 			"type": "Technical Report",
 			"description": "Technical Reports",
-			"bibtex_types": "techreport",
+			"bibtex_types": "techreport, report",
 			"hidden": 0
 		}
 	},
@@ -94,7 +94,7 @@
 			"order": 7,
 			"type": "Miscellaneous",
 			"description": "Miscellaneous Publications",
-			"bibtex_types": "misc",
+			"bibtex_types": "misc, unknown",
 			"hidden": 1
 		}
 	},
