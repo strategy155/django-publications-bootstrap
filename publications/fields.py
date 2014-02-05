@@ -67,7 +67,39 @@ def latex_citekey_extractor(latex):
 	return re.findall(r'.*?\\cite{(.*?)}.*?', latex)
 
 class CitationsField(ManyToManyField):
+	'''A many-to-many field pointing to publications.Citation objects that
+	   automatically maintains a collection of Citation objects that correspond
+	   to citations (ie. mentions of a citekey) in the value of a given field
+	   (as determined by an extractor function).
+	   
+	   Example
+	   -------
+	   Given a model for a book chapter:
+	    
+	       class Chapter(models.Model):
+	           text = models.TextField()
+	   
+	   you can add a CitationsField:
+	   
+	           text_citations = CitationsField('text')
+	       
+	   and thereafter you can use text_citations like a ManyToManyField that
+	   points to publications.Citation objects (one for each citekey mentioned
+	   in the 'text' of the chapter). The Citation objects have a 'publication'
+	   field that will point to the first Publication with the corresponding citekey
+	   (or None if no Publication has that citekey). The CitationsField maintains
+	   the collection of Citation objects automatically when the text of the chapter
+	   changes, or when the Publications themselves change.
+	'''
 	def __init__(self, text_field_name, citekey_extractor=latex_citekey_extractor, **kwargs):
+		'''@param text_field_name: the name of the field in which to look for citations
+		   @type text_field_name: str or unicode
+		   @param citekey_extractor: a function that takes the value of the field named by 'text_field_name'
+		                              as parameter and returns a list of citekeys. The default
+		                              function parses LaTeX citations (eg. \\cite{key}). 
+		   @type citekey_extractor: callable returning a list of strings or unicode objects.
+		   @return a new CitationsField
+		'''
 		kwargs.update(to='publications.Citation', blank=True)
 		ManyToManyField.__init__(self, **kwargs)
 
@@ -77,15 +109,21 @@ class CitationsField(ManyToManyField):
 
 	def contribute_to_class(self, cls, name):
 		ManyToManyField.contribute_to_class(self, cls, name)
+		
 		# Connect a post_save signal that will handle regular calls of the save() method
 		# of cls instances. This will not produce a correct result when an instance
 		# is saved in the admin interface. In that case, the m2m_changed signal will
 		# fix the problem. 
 		post_save.connect(self._instance_saved, sender=cls)
+		
 		# Connect an m2m_changed signal that will handle saves done through the
 		# admin interface. In such a save, during post_save signal, the m2m field
 		# is empty, and thus we can't remove obsolete Citation instances.
 		m2m_changed.connect(self._m2m_changed, sender=self.rel.through)
+		
+		# Connect another post_save signal that will update Citation objects
+		# when a Publication object changes.
+		post_save.connect(self._publication_saved, sender=publications.models.Publication)
 
 	def _m2m_changed(self, sender, instance, action, **kwargs):
 		# Prevent infinite recursion due to being notified of our own changes.
@@ -149,6 +187,19 @@ class CitationsField(ManyToManyField):
 			citations.append(citation)
 		# Add all citations in one go
 		manager.add(*citations)
+
+	def _publication_saved(self, instance, **kwargs):
+		# When a publication changes, we change Citation instances that point to it via their citekey.
+		
+		publication = instance
+		# Update those citations that point to this publication but whose
+		# citekey does no longer match. Set their publication to None.
+		# (Note: qs.update() does not call Citation.save() and does not emit signals).
+		publications.models.Citation.objects.filter(publication=publication).exclude(citekey=publication.citekey).update(publication=None)
+
+		# Update those citations that have a matching citekey but which
+		# don't point to the correct publication.
+		publications.models.Citation.objects.filter(citekey=publication.citekey).exclude(publication=publication).update(publication=publication)
 
 try:
 	from south.modelsinspector import add_introspection_rules
