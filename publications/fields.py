@@ -4,9 +4,8 @@ __docformat__ = 'epytext'
 
 from django import forms
 from django.forms import widgets
-from django.db import transaction
 from django.db.models import ManyToManyField, Field
-from django.db.models.signals import pre_save, post_save, m2m_changed
+from django.db.models.signals import post_save, m2m_changed
 import re
 import publications.models
 
@@ -78,20 +77,35 @@ class CitationsField(ManyToManyField):
 
 	def contribute_to_class(self, cls, name):
 		ManyToManyField.contribute_to_class(self, cls, name)
+		# Connect a post_save signal that will handle regular calls of the save() method
+		# of cls instances. This will not produce a correct result when an instance
+		# is saved in the admin interface. In that case, the m2m_changed signal will
+		# fix the problem. 
 		post_save.connect(self._instance_saved, sender=cls)
+		# Connect an m2m_changed signal that will handle saves done through the
+		# admin interface. In such a save, during post_save signal, the m2m field
+		# is empty, and thus we can't remove obsolete Citation instances.
 		m2m_changed.connect(self._m2m_changed, sender=self.rel.through)
 
 	def _m2m_changed(self, sender, instance, action, **kwargs):
+		# Prevent infinite recursion due to being notified of our own changes.
 		if self._is_updating_m2m:
 			return
 
 		if action == 'pre_clear':
+			# This signal happens after post_save, when the m2m field is about
+			# to be rewritten with form data. We delete Citation instances,
+			# because we don't want dangling Citations that are not in a relation
+			# with some model object through a CitationsField.
 			manager = getattr(instance, self.name)
 			manager.all().delete()
 			return 
 
 		# required because of admin behaviour (change of m2m fields after save of instance)
-		if action == 'post_add':
+		if action == 'post_clear':
+			# This signal happens at the end of a save operation in the model admin, and
+			# after the changes to the m2m field. We reset the m2m field references to
+			# citation objects.
 			try:
 				self._is_updating_m2m = True
 				self._update_citations(instance)
@@ -99,8 +113,10 @@ class CitationsField(ManyToManyField):
 				self._is_updating_m2m = False
 		
 	def _instance_saved(self, instance, **kwargs):
+		# Prevent infinite recursion due to being notified of our own changes.
 		if self._is_updating_m2m:
 			return
+		
 		try:
 			self._is_updating_m2m = True
 			self._update_citations(instance)
@@ -111,21 +127,28 @@ class CitationsField(ManyToManyField):
 		text = getattr(instance, self.text_field_name)
 		manager = getattr(instance, self.name)
 		
+		# Find citekeys in the given field using the given citekey_extractor
 		citekeys = self.citekey_extractor(text)
-		
-		print 'Deleted', [citation.pk for citation in manager.all()]
+
+		# Delete existing citation objects		
 		manager.all().delete()
 		manager.clear()
 		
+		citations = []
 		for key in citekeys:
+			# Create a Citation object for each citekey
 			pub = None
 			
+			# We use the first Publication with a matching citekey
 			db_pubs = publications.models.Publication.objects.filter(citekey=key)
 			if db_pubs:
 				pub = db_pubs.first()
 			
-			manager.create(citekey=key, field_name=self.text_field_name, publication=pub)
-		print 'Set to', [citation.pk for citation in manager.all()]
+			citation = publications.models.Citation(citekey=key, field_name=self.text_field_name, publication=pub)
+			citation.save()
+			citations.append(citation)
+		# Add all citations in one go
+		manager.add(*citations)
 
 try:
 	from south.modelsinspector import add_introspection_rules
