@@ -5,5 +5,6 @@ __docformat__ = 'epytext'
 from type import Type
 from list import List
 from publication import Publication
+from citation import Citation
 from customlink import CustomLink
 from customfile import CustomFile
