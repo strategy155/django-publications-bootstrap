@@ -64,7 +64,10 @@ class PagesField(Field):
 		return 'CharField'
 
 def latex_citekey_extractor(latex):
-	return re.findall(r'.*?\\cite{(.*?)}.*?', latex)
+	cite_sets = re.findall(r'.*?\\cite{(.*?)}.*?', latex)
+	for cite_set in cite_sets:
+		for cite in cite_set.split(','):
+			yield cite.strip()
 
 class CitationsField(ManyToManyField):
 	'''A many-to-many field pointing to publications.Citation objects that
