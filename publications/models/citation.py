@@ -14,8 +14,8 @@ class Citation(models.Model):
         app_label = 'publications'
         verbose_name_plural = 'Citations'
     
-    citekey = models.CharField(max_length=256, blank=False, null=False)
-    field_name = models.CharField(max_length=256, blank=False, null=False)
+    citekey = models.CharField(max_length=256, blank=False, null=False, db_index=True)
+    field_name = models.CharField(max_length=256, blank=False, null=False, db_index=True)
     publication = models.ForeignKey(Publication, blank=True, null=True, on_delete=models.SET_NULL)
 
     def __repr__(self):
