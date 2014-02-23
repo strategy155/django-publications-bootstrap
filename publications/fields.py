@@ -64,6 +64,8 @@ class PagesField(Field):
 		return 'CharField'
 
 def latex_citekey_extractor(latex):
+	if not latex:
+		return
 	cite_sets = re.findall(r'.*?\\cite{(.*?)}.*?', latex)
 	for cite_set in cite_sets:
 		for cite in cite_set.split(','):
