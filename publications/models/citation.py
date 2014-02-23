@@ -21,5 +21,5 @@ class Citation(models.Model):
     def __repr__(self):
         return '<Citation citekey=%r field_name=%r publication=%r>' % (self.citekey, self.field_name, self.publication)
     
-    def __str__(self):
-        return repr(self)
+    def __unicode__(self):
+        return u'[%s]' % self.citekey
