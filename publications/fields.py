@@ -96,6 +96,9 @@ class CitationsField(ManyToManyField):
 	   the collection of Citation objects automatically when the text of the chapter
 	   changes, or when the Publications themselves change.
 	'''
+	
+	_publication_save_listener_connected = False
+	
 	def __init__(self, text_field_name, citekey_extractor=latex_citekey_extractor, **kwargs):
 		'''@param text_field_name: the name of the field in which to look for citations
 		   @type text_field_name: str or unicode
@@ -128,7 +131,10 @@ class CitationsField(ManyToManyField):
 		
 		# Connect another post_save signal that will update Citation objects
 		# when a Publication object changes.
-		post_save.connect(self._publication_saved, sender=publications.models.Publication)
+		if not CitationsField._publication_save_listener_connected:
+			# This is required only once, not for each instance of CitationField
+			post_save.connect(self._publication_saved, sender=publications.models.Publication)
+			CitationsField._publication_save_listener_connected = True
 
 	def _m2m_changed(self, sender, instance, action, **kwargs):
 		# Prevent infinite recursion due to being notified of our own changes.
