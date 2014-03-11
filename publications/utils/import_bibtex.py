@@ -91,13 +91,13 @@ def import_bibtex(bibtex):
 	# publication types
 	types = Type.objects.all()
 
-	publications = []
-
 	integer_keys = [
 		'volume',
 		'number',
 		'year']
 
+	saved_publications = []
+	
 	# try adding publications
 	for entry in bib:
 		
@@ -172,7 +172,6 @@ def import_bibtex(bibtex):
 				except ValueError:
 					entry['number'] = None
 
-
 			publication_data = dict(type_id=type_id,
 				title=unicode(entry['title']),
 				authors=unicode(authors),
@@ -197,27 +196,19 @@ def import_bibtex(bibtex):
 				publication = Publication.objects.get(**converted_data)
 			except Publication.DoesNotExist:
 				publication.citekey = entry['id']
-				publication.save()
+				try:
+					publication.save()
+					saved_publications.append(publication)
+				except Exception, e:
+					# show error message
+					key = publication.citekey
+					if not key:
+						key = '<unnamed>'
+					errors.append('An error occurred saving publication "%s": %s' % (key, e))
 			
-			# add publication
-			publications.append(publication)
 		else:
 			key = entry['id'] if 'id' in entry else '<unnamed>'
 			errors.append('BibTeX entry "%s" is missing mandatory key "title", "author" or "year".' % key)
 			continue
-
-	# save publications
-	saved_publications = []
-	for publication in publications:
-		try:
-			publication.save()
-			saved_publications.append(publication)
-		except Exception, e:
-			# show error message
-			key = publication.citekey
-			if not key:
-				key = '<unnamed>'
-			errors.append('An error occurred saving publication "%s": %s' % (key, e))
-			break
 
 	return saved_publications, errors
