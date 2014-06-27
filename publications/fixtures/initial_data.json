@@ -17,7 +17,7 @@
 			"order": 1,
 			"type": "Conference",
 			"description": "Conference Papers",
-			"bibtex_types": "proceedings, inproceedings, conference",
+			"bibtex_types": "proceeding, proceedings, inproceedings, conference",
 			"hidden": 0
 		}
 	},
@@ -39,7 +39,7 @@
 			"order": 3,
 			"type": "Book",
 			"description": "Books",
-			"bibtex_types": "book",
+			"bibtex_types": "book, manual",
 			"hidden": 0
 		}
 	},
@@ -72,7 +72,7 @@
 			"order": 6,
 			"type": "Thesis",
 			"description": "Theses",
-			"bibtex_types": "phdthesis, mastersthesis",
+			"bibtex_types": "phdthesis, mastersthesis, masterthesis",
 			"hidden": 1
 		}
 	},
@@ -94,7 +94,7 @@
 			"order": 7,
 			"type": "Miscellaneous",
 			"description": "Miscellaneous Publications",
-			"bibtex_types": "misc, unknown",
+			"bibtex_types": "misc, unknown, in, patent",
 			"hidden": 1
 		}
 	},

@@ -100,7 +100,6 @@ def import_bibtex(bibtex):
 	
 	# try adding publications
 	for entry in bib:
-		
 		# first fix integers - 'year' needs to be checked for int-ness in particular
 		for key in integer_keys:
 			try:
@@ -194,6 +193,7 @@ def import_bibtex(bibtex):
 			try:
 				converted_data = model_to_dict(publication, exclude=['lists', 'image', 'pdf', 'banner', 'id', 'citekey'])
 				publication = Publication.objects.get(**converted_data)
+				saved_publications.append(publication)
 			except Publication.DoesNotExist:
 				publication.citekey = entry['id']
 				try:
@@ -208,7 +208,11 @@ def import_bibtex(bibtex):
 			
 		else:
 			key = entry['id'] if 'id' in entry else '<unnamed>'
-			errors.append('BibTeX entry "%s" is missing mandatory key "title", "author" or "year".' % key)
+			missing_keys = []
+			for k in ('title', 'author', 'year'):
+				if not k in entry:
+					missing_keys.append(k)
+			errors.append('BibTeX entry "%s" is missing following mandatory keys: %s' % (key, ', '.join(missing_keys)))
 			continue
 
 	return saved_publications, errors
