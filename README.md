@@ -28,6 +28,8 @@ Requirements
 
 * Python >= 2.5.0
 * Django >= 1.3.0
+* bibtexparser >= 0.5.5
+* latexcodec >= 0.3.0
 
 The app should work with the above versions, but older versions might also work.
 

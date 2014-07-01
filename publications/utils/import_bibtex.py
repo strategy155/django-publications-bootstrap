@@ -78,9 +78,11 @@ def import_bibtex(bibtex):
 	
 	# BibTexParser expects a utf-8 byte-string
 	if isinstance(bibtex, unicode):
-		bibtex = StringIO(bibtex.encode('utf-8'))
-	elif isinstance(bibtex, str):
-		bibtex = StringIO(bibtex)
+		bibtex = bibtex.encode('utf-8')
+		
+	# add trailing newline if not present, otherwise bibtexparser will not parse fully
+	if not bibtex.endswith('\n'):
+		bibtex = bibtex + '\n'
 		
 	# try to parse BibTex
 	bib = BibTexParser(bibtex, customization=_bibtexparser_customizations).get_entry_list()
