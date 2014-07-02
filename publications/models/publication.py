@@ -120,6 +120,9 @@ class Publication(models.Model):
 		for i, author in enumerate(self.authors_list):
 			if author == '':
 				continue
+			
+			if '$' in author:
+				continue # don't attempt to process names with math-mode in them
 
 			names = split(author, ' ')
 
