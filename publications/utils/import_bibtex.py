@@ -1,13 +1,15 @@
+# -*- encoding: utf-8 -*-
+
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@theis.io> and Christian Glodt <chris@mind.lu>'
 __docformat__ = 'epytext'
 
 from publications.models import Publication, Type
-from cStringIO import StringIO
 from bibtexparser.bparser import BibTexParser
-from bibtexparser.customization import convert_to_unicode, author, keyword
+from bibtexparser.customization import author, keyword
 from django.forms.models import model_to_dict
-import latexcodec, re
+
+import re
 
 # mapping of months
 MONTHS = {
@@ -24,51 +26,31 @@ MONTHS = {
 	'nov': 11, 'november': 11,
 	'dec': 12, 'december': 12}
 
-def _replace_escaped_spaces(string):
-	return string.replace(r'\ ', ' ')
-
-def _ungroup_latex(string):
-	'''Strip curly braces from a string, except for backslash-escaped ones.'''
+def _fix_text_grouping(record):
+	'''Turns \text{\'e} into the correct \text{{\'e}} (\text{} being the amsmath command).
+	'''
 	
-	strip_unescaped_braces_regex = r'''
-		(?<!\\) # not a backslash
-		({)		# followed by an open curly brace
-		|		# or
-		(?<!\\)	# not a backslash
-		(})		# followed by a closed curly brace
-		'''
-	string = re.sub(strip_unescaped_braces_regex, '', string, flags=re.VERBOSE)
+	def wrap_in_group_re_clble(match):
+		return '{%s}' % match
 	
-	# replace escaped curly braces with unescaped ones. 
-	return string.replace(r'\{', '{').replace(r'\}', '}')
-
-def _try_latex_to_utf8(string):
-	try:
-		return string.encode('utf-8').decode('latex+utf-8')
-	except ValueError:
-		return string
-
-def _latex_to_text(string):
-	string = _try_latex_to_utf8(string)
-	string = _ungroup_latex(string)
-	string = _replace_escaped_spaces(string)
-	return string
-
-def _delatex(record):
-	for key in record:
-		val = record[key]
-		if isinstance(val, list):
-			val = [_latex_to_text(part) for part in val]
+	def wrap_in_group(text):
+		return re.sub(r'''(\\text{)(\\.*?)(})''', lambda match: match.expand(r'\1{\2}\3'), text)
+	
+	for key, value in record.iteritems():
+		
+		if isinstance(value, list):
+			new_value = [wrap_in_group(element) for element in value]
 		else:
-			val = _latex_to_text(val)
-		record[key] = val
+			new_value = wrap_in_group(value)
+		
+		record[key] = new_value
+	
 	return record
 
 def _bibtexparser_customizations(record):
-	record = convert_to_unicode(record)
 	record = author(record)
 	record = keyword(record)
-	record = _delatex(record)
+	record = _fix_text_grouping(record)
 	return record
 
 def import_bibtex(bibtex):
@@ -210,9 +192,11 @@ def import_bibtex(bibtex):
 			
 		else:
 			key = entry['id'] if 'id' in entry else '<unnamed>'
+			from pprint import pprint
+			pprint(entry)
 			missing_keys = []
 			for k in ('title', 'author', 'year'):
-				if not k in entry:
+				if not k in entry or entry[k] == None:
 					missing_keys.append(k)
 			errors.append('BibTeX entry "%s" is missing following mandatory keys: %s' % (key, ', '.join(missing_keys)))
 			continue
