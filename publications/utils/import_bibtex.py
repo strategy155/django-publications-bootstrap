@@ -53,7 +53,7 @@ def _bibtexparser_customizations(record):
 	record = _fix_text_grouping(record)
 	return record
 
-def import_bibtex(bibtex):
+def import_bibtex(bibtex, bibtexparser_customization=None):
 	'''
 	Import BibTeX data from a file-like object or a string
 	'''
@@ -67,7 +67,12 @@ def import_bibtex(bibtex):
 		bibtex = bibtex + '\n'
 		
 	# try to parse BibTex
-	bib = BibTexParser(bibtex, customization=_bibtexparser_customizations, ignore_nonstandard_types=False).get_entry_list()
+	def _cust(record):
+		record = _bibtexparser_customizations(record)
+		if bibtexparser_customization:
+			record = bibtexparser_customization(record)
+		return record
+	bib = BibTexParser(bibtex, customization=_cust, ignore_nonstandard_types=False).get_entry_list()
 
 	# container for error messages
 	errors = []
