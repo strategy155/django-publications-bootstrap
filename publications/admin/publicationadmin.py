@@ -21,7 +21,7 @@ class PublicationAdmin(admin.ModelAdmin):
 	list_display = ('type', 'first_author', 'title', 'type', 'year', 'journal_or_book_title')
 	list_display_links = ('title',)
 	change_list_template = 'admin/publications/change_list.html'
-	search_fields = ('title', 'journal', 'authors', 'keywords', 'year')
+	search_fields = ('title', 'journal', 'authors', 'keywords', 'year', 'citekey')
 	fieldsets = (
 		(None, {'fields':
 			('type', 'title', 'authors', 'year', 'month')}),
