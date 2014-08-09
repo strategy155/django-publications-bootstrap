@@ -28,7 +28,7 @@
 			"order": 2,
 			"type": "Technical Report",
 			"description": "Technical Reports",
-			"bibtex_types": "report",
+			"bibtex_types": "techreport, report",
 			"hidden": 0
 		}
 	},
