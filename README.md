@@ -29,8 +29,9 @@ Requirements
 ------------
 
 * Python >= 2.7.0
-* Django >= 1.4.0
+* Django >= 1.3.0
 * Pillow >= 2.4.0
+* bibtexparser >= 0.5.5
 
 The app was tested with the versions above, but older versions might also work.
 

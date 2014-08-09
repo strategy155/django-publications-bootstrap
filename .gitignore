@@ -5,3 +5,7 @@
 MANIFEST
 build
 dist
+.project
+.pydevproject
+.settings
+
