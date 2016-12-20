@@ -5,7 +5,9 @@ __docformat__ = 'epytext'
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404
 from publications.models import Publication
+from rest_framework.decorators import api_view
 
+@api_view()
 def unapi(request):
 	"""
 	This view implements unAPI 1.0 (see http://unapi.info).
@@ -17,7 +19,7 @@ def unapi(request):
 	if format is not None:
 		try:
 			publications = Publication.objects.filter(pk=int(id))
-			
+
 			if not publications:
 				raise ValueError
 

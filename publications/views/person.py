@@ -9,7 +9,9 @@ from django.shortcuts import render
 from publications.models import Type, Publication, CustomLink, CustomFile
 from publications.utils import populate
 from string import capwords
+from rest_framework.decorators import api_view
 
+@api_view()
 def person(request, name):
 	author = capwords(name.replace('+', ' '))
 	author = author.replace(' Von ', ' von ').replace(' Van ', ' van ')

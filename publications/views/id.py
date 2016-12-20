@@ -4,7 +4,9 @@ __docformat__ = 'epytext'
 
 from django.shortcuts import render
 from publications.models import Type, Publication
+from rest_framework.decorators import api_view
 
+@api_view()
 def id(request, publication_id):
 	publications = Publication.objects.filter(pk=publication_id)
 

@@ -8,3 +8,4 @@ from .id import id
 from .keyword import keyword
 from .list import list
 from .unapi import unapi
+from .add_pub import add_pub

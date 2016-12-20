@@ -5,7 +5,9 @@ __docformat__ = 'epytext'
 from django.shortcuts import render
 from publications.models import Publication, CustomLink, CustomFile
 from publications.utils import populate
+from rest_framework.decorators import api_view
 
+@api_view()
 def year(request, year=None):
 	years = []
 	publications = Publication.objects.select_related()
