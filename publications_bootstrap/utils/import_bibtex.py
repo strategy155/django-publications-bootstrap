@@ -9,6 +9,7 @@ from bibtexparser.bparser import BibTexParser
 from bibtexparser.customization import author, keyword
 from django.forms.models import model_to_dict
 from django.core.exceptions import FieldDoesNotExist
+from django_countries import countries
 
 import re
 
@@ -26,6 +27,12 @@ MONTHS = {
         'oct': 10, 'october': 10,
         'nov': 11, 'november': 11,
         'dec': 12, 'december': 12}
+
+COUNTRIES_BY_CODE = dict(countries)
+# Reversed dict
+
+# Python 3+
+COUNTRIES_BY_NAME = {v: k for k, v in COUNTRIES_BY_CODE.items()}
 
 def _fix_text_grouping(record):
     '''Turns \text{\'e} into the correct \text{{\'e}} (\text{} being the amsmath command).
@@ -118,7 +125,11 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
             citekey = entry.pop('ID', '')
 
             # map month
-            entry['month'] = MONTHS.get(entry['month'].lower(), 0)
+            month_str = entry.pop('month', '').lower()
+            if month_str:
+                month = MONTHS.get(month_str, None)
+                if month:
+                    entry['month'] = month
 
             # determine type
             type_id = None
@@ -155,10 +166,17 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
             keywords.extend(entry.pop('tags', []))
             tags = ', '.join(keywords)
 
-            file = entry.pop('file')
+            file = entry.pop('file', None)
             if file and not 'pdf' in entry:
                 entry['pdf'] = file
 
+            country = entry.pop('country', '').strip()
+            if country in COUNTRIES_BY_NAME:
+                entry['country'] = COUNTRIES_BY_NAME[country]
+            elif country.upper() in COUNTRIES_BY_CODE:
+                entry['country'] = country.upper()
+
+            # remove fields that do not exist in Publications yet
             fields_to_skip = []
             for field in entry:
                 try:
