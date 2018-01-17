@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .models import PublicationLink, PublicationFile
+from ..models import PublicationLink, PublicationFile
 
 
 def populate(publications):

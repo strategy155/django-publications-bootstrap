@@ -2,13 +2,16 @@
 
 import re
 
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django_countries import countries
+from django.db import transaction
 
-from ..bibtex import parse
+from ..utils import import_bibtex as do_import_bibtex
 from ..models import Publication, Type
 
 # mapping of months
@@ -36,160 +39,37 @@ except:
     COUNTRIES_BY_NAME = {v: k for k, v in COUNTRIES_BY_CODE.items()}
 
 
-def import_bibtex(request):
-    if request.method == 'POST':
-        # try to parse BibTex
-        bib = parse(request.POST['bibliography'])
+    def import_bibtex(request):
+        if request.method == 'POST':
+            # try to import BibTex
+            bibtex = request.POST['bibliography']
 
-        # container for error messages
-        errors = {}
+            with transaction.atomic():
+                publications, errors = do_import_bibtex(bibtex)
 
-        # publication types
-        types = Type.objects.all()
-
-        # check for errors
-        if not bib:
-            if not request.POST['bibliography']:
-                errors['bibliography'] = 'This field is required.'
-
-        if not errors:
-            publications = []
-
-            # try adding publications
-            for entry in bib:
-                if 'title' in entry and 'author' in entry and 'year' in entry:
-                    # parse authors
-                    authors = entry['author'].split(' and ')
-                    for i in range(len(authors)):
-                        author = authors[i].split(',')
-                        author = [author[-1]] + author[:-1]
-                        authors[i] = ' '.join(author)
-                    authors = ', '.join(authors)
-
-                    # add missing keys
-                    keys = [
-                        'journal',
-                        'booktitle',
-                        'address',
-                        'publisher',
-                        'editor',
-                        'edition',
-                        'institution',
-                        'school',
-                        'organization',
-                        'series',
-                        'url',
-                        'doi',
-                        'isbn',
-                        'tags',
-                        'note',
-                        'abstract',
-                        'month']
-
-                    for key in keys:
-                        if key not in entry:
-                            entry[key] = ''
-
-                    # map integer fields to integers
-                    entry['month'] = Publication.EMonths.get(MONTHS.get(entry['month'].lower(), 0), None)
-
-                    for field in ['volume', 'number', 'chapter', 'section']:
-                        entry[field] = entry.get(field, None)
-
-                    # remove whitespace characters (likely due to line breaks)
-                    entry['url'] = re.sub(r'\s', '', entry['url'])
-
-                    if 'country' not in entry:
-                        entry['country'] = ''
-                    else:
-                        if entry['country'].strip() in COUNTRIES_BY_NAME:
-                            entry['country'] = COUNTRIES_BY_NAME[entry['country'].strip()]
-                        elif entry['country'].upper() in COUNTRIES_BY_CODE:
-                            entry['country'] = entry['country'].upper()
-                        else:
-                            entry['country'] = ''
-
-                    # determine type
-                    type_id = None
-
-                    for t in types:
-                        if entry['type'] in t.bibtex_type_list:
-                            type_id = t.id
-                            break
-
-                    if type_id is None:
-                        errors['bibliography'] = 'Type "{}" unknown.'.format(entry['type'])
-                        break
-
-                    # add publication
-                    publications.append(Publication(
-                        type_id=type_id,
-                        citekey=entry['key'],
-                        title=entry['title'],
-                        authors=authors,
-                        year=entry['year'],
-                        month=entry['month'],
-                        journal=entry['journal'],
-                        book_title=entry['booktitle'],
-                        publisher=entry['publisher'],
-                        location=entry['address'],
-                        country=entry['country'],
-                        editor=entry['editor'],
-                        edition=entry['edition'],
-                        institution=entry['institution'],
-                        school=entry['school'],
-                        organization=entry['organization'],
-                        series=entry['series'],
-                        volume=entry['volume'],
-                        number=entry['number'],
-                        chapter=entry['chapter'],
-                        section=entry['section'],
-                        note=entry['note'],
-                        url=entry['url'],
-                        doi=entry['doi'],
-                        isbn=entry['isbn'],
-                        external=False,
-                        abstract=entry['abstract'],
-                        tags=entry['tags'],
-                        status=Publication.EStatuses.PUBLISHED))
-                else:
-                    errors['bibliography'] = 'Make sure that the keys <title>, <author> and <year> are present.'
-                    break
-
-            if not publications:
-                errors['bibliography'] = 'No valid BibTex entries found.'
-
-        if errors:
-            # some error occurred
-            return render(
-                request,
-                'admin/publications_bootstrap/import_bibtex.html', {
-                    'errors': errors,
-                    'title': 'Import BibTex',
-                    'types': Type.objects.all(),
-                    'request': request})
-        else:
-            try:
-                # save publications
-                for publication in publications:
-                    publication.save()
-            except:
-                msg = 'Some error occurred during saving of publications.'
+            status = messages.SUCCESS
+            if len(publications) == 0:
+                status = messages.ERROR
+                msg = 'No publications were added, %i errors occurred' % len(errors)
+            elif len(publications) > 1:
+                msg = 'Successfully added %i publications (%i skipped due to errors)' % (len(publications), len(errors))
             else:
-                if len(publications) > 1:
-                    msg = 'Successfully added {} publications.'.format(len(publications))
-                else:
-                    msg = 'Successfully added {} publication.'.format(len(publications))
+                msg = 'Successfully added %i publication (%i error(s) occurred)' % (len(publications), len(errors))
 
             # show message
-            messages.info(request, msg)
+            messages.add_message(request, status, msg)
+
+            for error in errors:
+                messages.add_message(request, messages.ERROR, error)
 
             # redirect to publication listing
             return HttpResponseRedirect('../')
-    else:
-        return render(request, 'admin/publications_bootstrap/import_bibtex.html', {'title': 'Import BibTex',
-                                                                                   'types': Type.objects.all(),
-                                                                                   'request': request})
-
+        else:
+            return render_to_response(
+                    'admin/publications_bootstrap/import_bibtex.html', {
+                                                'title': 'Import BibTex',
+                                            'types': Type.objects.all(),
+                                            'request': request},
+                                            RequestContext(request))
 
 import_bibtex = staff_member_required(import_bibtex)
