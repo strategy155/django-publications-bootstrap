@@ -1,10 +1,6 @@
 [![Python](https://img.shields.io/badge/Python-3.4,3.5,3.6-blue.svg?style=flat-square)](/)
-[![Django](https://img.shields.io/badge/Django-1.9,1.10,1.11-blue.svg?style=flat-square)](/)
+[![Django](https://img.shields.io/badge/Django-1.10,1.11-blue.svg?style=flat-square)](/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/django_publications_bootstrap.svg?style=flat-square)](https://pypi.python.org/pypi/django-publications-bootstrap)
-[![Build Status](https://travis-ci.org/mbourqui/django-publications-bootstrap.svg?branch=master)](https://travis-ci.org/mbourqui/django-publications-bootstrap)
-[![Coverage Status](https://coveralls.io/repos/github/mbourqui/django-publications-bootstrap/badge.svg?branch=master)](https://coveralls.io/github/mbourqui/django-publications-bootstrap?branch=master)
-
 # Bootstrap-powered scientific publications for Django
 
 A Django app for managing scientific publications, providing a Bootstrap-powered UI.
@@ -38,8 +34,8 @@ A Django app for managing scientific publications, providing a Bootstrap-powered
 
 ## Requirements
 
-* Python == 2.7 or >= 3.4
-* Django >= 1.9.13
+* Python >= 3.4
+* Django >= 1.10
 * Pillow >= 2.4.0
 * django-countries >= 4.0
 * django-ordered-model >= 1.4.1
@@ -69,5 +65,8 @@ A Django app for managing scientific publications, providing a Bootstrap-powered
 
 ## Credits
 
-This is a fork of [django-publications](https://github.com/lucastheis/django-publications) from
+This is a fork [django-publications-bootstrap](https://github.com/mbourqui/django-publications-bootstrap) 
+of a fork of [django-publications](https://github.com/lucastheis/django-publications) from
 [lucastheis](https://github.com/lucastheis).
+The bibtex-import was derived (and modified) from 
+[christianglodt] (https://github.com/christianglodt/django-publications)
