@@ -58,10 +58,11 @@ def import_bibtex(request):
         return HttpResponseRedirect('../')
     else:
         return render_to_response(
-                'admin/publications_bootstrap/import_bibtex.html', {
-                                            'title': 'Import BibTex',
-                                        'types': Type.objects.all(),
-                                        'request': request},
-                                        RequestContext(request))
+                'admin/publications_bootstrap/import_bibtex.html',
+                context=RequestContext(request, {
+                    'title': 'Import BibTex',
+                    'types': Type.objects.all(),
+                    'request': request},
+                                       ))
 
 import_bibtex = staff_member_required(import_bibtex)
