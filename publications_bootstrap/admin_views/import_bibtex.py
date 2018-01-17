@@ -2,7 +2,6 @@
 
 import re
 
-from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -57,12 +56,11 @@ def import_bibtex(request):
         # redirect to publication listing
         return HttpResponseRedirect('../')
     else:
-        return render_to_response(
-                'admin/publications_bootstrap/import_bibtex.html',
-                context=RequestContext(request, {
-                    'title': 'Import BibTex',
-                    'types': Type.objects.all(),
-                    'request': request},
-                                       ))
+        return render(request,
+                      'admin/publications_bootstrap/import_bibtex.html',
+                      {'title': 'Import BibTex',
+                       'types': Type.objects.all(),
+                       'request': request},
+                      )
 
 import_bibtex = staff_member_required(import_bibtex)
