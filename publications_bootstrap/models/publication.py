@@ -119,7 +119,7 @@ class Publication(models.Model):
                             help_text='List of tags separated by commas.')
     url = models.URLField(blank=True, verbose_name='URL', help_text='Link to PDF or journal page.')
     code = models.URLField(blank=True, help_text='Link to page with code.')
-    pdf = models.FileField(upload_to='publications_bootstrap/', verbose_name='PDF', blank=True, null=True)
+    pdf = models.FileField(upload_to='publications_bootstrap/', verbose_name='PDF', blank=True, null=True, max_length=500)
     image = models.ImageField(upload_to='publications_bootstrap/images/', blank=True, null=True)
     thumbnail = models.ImageField(upload_to='publications_bootstrap/thumbnails/', blank=True, null=True)
     external = models.BooleanField(default=False, db_index=True,
