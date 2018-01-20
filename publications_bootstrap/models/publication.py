@@ -78,7 +78,7 @@ class Publication(models.Model):
             return str(self.value)
 
 
-    type = models.ForeignKey(Type, db_index=True)
+    type = models.ForeignKey(Type, db_index=True, on_delete=models.CASCADE)
     citekey = NullCharField(max_length=512, blank=True, null=True, unique=True, db_index=True,
                             help_text='BibTex citation key. Leave blank if unsure.')
     title = models.CharField(max_length=512, db_index=True)

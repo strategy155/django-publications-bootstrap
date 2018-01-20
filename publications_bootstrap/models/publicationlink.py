@@ -9,7 +9,7 @@ class PublicationLink(models.Model):
     class Meta:
         app_label = 'publications_bootstrap'  # Fix for Django<1.7
 
-    publication = models.ForeignKey(Publication)
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     description = models.CharField(max_length=256)
     url = models.URLField(verbose_name='URL')
 
