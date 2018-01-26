@@ -10,6 +10,7 @@ from bibtexparser.customization import author, keyword
 from django.forms.models import model_to_dict
 from django.core.exceptions import FieldDoesNotExist
 from django_countries import countries
+from django.db import IntegrityError, transaction
 
 import re
 
@@ -83,7 +84,9 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
         if bibtexparser_customization:
             record = bibtexparser_customization(record)
         return record
-    bib = BibTexParser(bibtex, customization=_cust, ignore_nonstandard_types=False).get_entry_list()
+    bib = BibTexParser(bibtex,
+                       customization=_cust,
+                       ignore_nonstandard_types=False).get_entry_list()
 
     # container for error messages
     errors = []
@@ -100,7 +103,8 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
 
     # try adding publications
     for entry in bib:
-        # first fix integers - 'year' needs to be checked for int-ness in particular
+        # first fix integers - 'year' needs to be checked
+        # for int-ness in particular
         for key in integer_keys:
             try:
                 val = int(entry.get(key, ''))
@@ -119,7 +123,8 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
                     return ' '.join([p.strip() for p in n.split(',')][::-1])
                 return n
             author = entry.pop('author', [])
-            authors = ', '.join([reverse_and_unseparate_name(n) for n in author])
+            authors = ', '.join([reverse_and_unseparate_name(n)
+                                 for n in author])
 
 
             citekey = entry.pop('ID', '')
@@ -141,8 +146,11 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
                     break
 
             if type_id is None:
-                errors.append('Type "' + reftype + '" unknown.')
+                errors.append('Type "{}" unknown.'.format(reftype))
                 continue
+
+            # ignore an explicit `type`-field
+            type_str_ignored = entry.pop('type', None)
 
             # Handle case where 'Volume' key contains DOI reference
             volume = entry.get('volume', None)
@@ -189,7 +197,6 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
             publication_data = dict(
                 type_id=type_id,
                 authors=authors,
-                #citekey=citekey,
                 tags=tags,
                 **entry
                 )
@@ -207,15 +214,17 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
                 saved_publications.append(publication)
             except Publication.DoesNotExist:
                 publication.citekey = citekey
-                try:
-                    publication.save()
-                    saved_publications.append(publication)
-                except Exception as e:
-                    # show error message
-                    key = publication.citekey
-                    if not key:
-                        key = '<unnamed>'
-                    errors.append('An error occurred saving publication "%s": %s' % (key, e))
+                with transaction.atomic():
+                    try:
+                        publication.save()
+                        saved_publications.append(publication)
+                    except Exception as e:
+                        # show error message
+                        key = publication.citekey
+                        if not key:
+                            key = '<unnamed>'
+                        errors.append('An error occurred saving '
+                                      'publication "%s": %s' % (key, e))
 
         else:
             key = entry['id'] if 'id' in entry else '<unnamed>'
@@ -225,7 +234,8 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
             for k in ('title', 'author', 'year'):
                 if not k in entry or entry[k] == None:
                     missing_keys.append(k)
-            errors.append('BibTeX entry "%s" is missing following mandatory keys: %s' % (key, ', '.join(missing_keys)))
+            errors.append('BibTeX entry "%s" is missing following mandatory '
+                          'keys: %s' % (key, ', '.join(missing_keys)))
             continue
 
     return saved_publications, errors
