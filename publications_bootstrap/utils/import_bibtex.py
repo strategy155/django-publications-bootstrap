@@ -170,9 +170,15 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
                 except ValueError:
                     entry['number'] = None
 
-            keywords = entry.pop('keywords', [])
-            keywords.extend(entry.pop('tags', []))
-            tags = ', '.join(keywords)
+            # keywords and tags are expected to be a string
+            keywords = entry.pop('keywords', '')
+            tags = entry.pop('tags', '')
+            kw_tags = []
+            if keywords:
+                kw_tags.append(keywords)
+            if tags:
+                kw_tags.append(tags)
+            tags = ', '.join(kw_tags)
 
             file = entry.pop('file', None)
             if file and not 'pdf' in entry:
