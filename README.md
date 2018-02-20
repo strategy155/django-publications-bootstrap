@@ -1,5 +1,5 @@
 [![Python](https://img.shields.io/badge/Python-3.4,3.5,3.6-blue.svg?style=flat-square)](/)
-[![Django](https://img.shields.io/badge/Django-2.0.2+-blue.svg?style=flat-square)](/)
+[![Django](https://img.shields.io/badge/Django-1.10,1.11,2.0.2-blue.svg?style=flat-square)](/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](/LICENSE)
 # Bootstrap-powered scientific publications for Django
 
