@@ -34,6 +34,8 @@ class Publication(models.Model):
     class Meta:
         ordering = ['-year', '-month', '-id']
         app_label = 'publications_bootstrap'  # Fix for Django<1.7
+        verbose_name = 'публикацию'
+        verbose_name_plural = 'публикации'
 
     # names shown in admin area
     class EMonths(EOrderedChoice, metaclass=EChoiceMetaInt):

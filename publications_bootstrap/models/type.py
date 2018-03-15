@@ -9,6 +9,8 @@ class Type(OrderedModel):
     class Meta:
         ordering = ('order',)
         app_label = 'publications_bootstrap'  # Fix for Django<1.7
+        verbose_name = 'тип'
+        verbose_name_plural = 'типы'
 
     title = models.CharField(max_length=128, unique=True, db_index=True)
     description = models.CharField(max_length=128)

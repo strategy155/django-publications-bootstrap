@@ -16,9 +16,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-
     'ordered_model',
-
     'publications_bootstrap',
 )
 DATABASES = {
@@ -37,9 +35,9 @@ MIDDLEWARE = (
 if StrictVersion(django.get_version()) < StrictVersion('1.10.0'):
     MIDDLEWARE_CLASSES = MIDDLEWARE
 
-TIME_ZONE = 'Europe/Zurich'
+TIME_ZONE = 'Europe/Moscow'
 
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = 'ru-ru'
 
 SITE_ID = 1
 

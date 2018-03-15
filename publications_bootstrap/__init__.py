@@ -7,3 +7,4 @@ __docformat__ = 'numpy'
 __version__ = '2.4.2'
 __version_info__ = tuple([int(num) if num.isdigit() else num for num in __version__.replace('-', '.', 1).split('.')])
 __status__ = 'Stable'
+default_app_config = 'publications_bootstrap.apps.PublicationsBootstrapConfig'

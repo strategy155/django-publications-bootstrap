@@ -4,7 +4,7 @@ from django.conf import settings
 
 class PublicationsBootstrapConfig(AppConfig):
     name = 'publications_bootstrap'
-    verbose_name = "Bootstrap-powered scientific publications for Django"
+    verbose_name = "Управление библиографией"
 
     # TODO: check if dependencies are met
 

@@ -14,6 +14,8 @@ from ..models import Publication, PublicationLink, PublicationFile, Catalog
 
 
 class PublicationCatalogInline(admin.TabularInline):
+    verbose_name = 'каталог'
+    verbose_name_plural = 'связи каталог-публикация'
     model = Catalog.publications.through
 
 

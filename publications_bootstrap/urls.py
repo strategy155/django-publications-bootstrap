@@ -4,7 +4,7 @@ from django.conf.urls import url
 
 from . import views
 
-app_name = 'publications_bootstrap'
+app_name = 'Библиография'
 urlpatterns = [
     url(r'^$', views.by_year, name='index'),
     url(r'^(?P<publication_id>\d+)/$', views.by_id, name='id'),

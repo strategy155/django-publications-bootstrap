@@ -12,6 +12,8 @@ class Catalog(models.Model):
     class Meta:
         ordering = ('title',)
         app_label = 'publications_bootstrap'  # Fix for Django<1.7
+        verbose_name = 'каталог'
+        verbose_name_plural = 'каталоги'
 
     title = models.CharField(max_length=128, unique=True, db_index=True)
     description = models.CharField(max_length=128)
