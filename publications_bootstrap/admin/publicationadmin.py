@@ -89,7 +89,7 @@ class PublicationAdmin(admin.ModelAdmin):
         ('References', {
             'fields': ('citekey', 'tags', 'code', 'url', 'doi', 'isbn')}),
         ('Description', {
-            'fields': ('abstract', 'note')}),
+            'fields': ('abstract', 'note', 'summary')}),
         ('Media', {
             'classes': ('collapse',),
             'fields': ('pdf', 'image', 'thumbnail')}),

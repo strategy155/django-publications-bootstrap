@@ -147,6 +147,7 @@ class Publication(models.Model):
     isbn = NullCharField(max_length=32, verbose_name='ISBN', blank=True, null=True, unique=True,
                          help_text='Only for a book.')  # A-B-C-D
     status = make_echoicefield(EStatuses, default=EStatuses.PUBLISHED, blank=False)
+    summary = models.TextField(blank=True)
 
     def __init__(self, *args, **kwargs):
         models.Model.__init__(self, *args, **kwargs)

@@ -208,6 +208,7 @@ def import_bibtex(bibtex, bibtexparser_customization=None):
                 )
 
             publication = Publication(**publication_data)
+
             try:
                 converted_data = model_to_dict(publication,
                                                exclude=['lists',
