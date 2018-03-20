@@ -18,7 +18,16 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'ordered_model',
     'publications_bootstrap',
+    'ckeditor',
+    'ckeditor_uploader'
 )
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+    },
+}
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import warnings
 from string import ascii_uppercase
-
+from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.db import models
 from django.utils.http import urlquote_plus
@@ -9,7 +9,6 @@ from django.utils.translation import ugettext_lazy as _
 from django_countries.fields import CountryField
 from echoices.enums import EChoice, EOrderedChoice, EChoiceMeta
 from echoices.fields import make_echoicefield
-
 from ..fields import NullCharField, PagesField
 from ..models import Type
 
@@ -147,7 +146,7 @@ class Publication(models.Model):
     isbn = NullCharField(max_length=32, verbose_name='ISBN', blank=True, null=True, unique=True,
                          help_text='Only for a book.')  # A-B-C-D
     status = make_echoicefield(EStatuses, default=EStatuses.PUBLISHED, blank=False)
-    summary = models.TextField(blank=True)
+    summary = RichTextField(blank=True, config_name='default')
 
     def __init__(self, *args, **kwargs):
         models.Model.__init__(self, *args, **kwargs)
